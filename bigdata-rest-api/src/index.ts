@@ -1,10 +1,14 @@
 import  express  from "express";
 
-import redisClient from "./config/redis"
+import redisClient from "./config/redis";
+import resourceRoutes from "../src/routes/resourceRoutes"
+
 
 
 const app = express();
 app.use(express.json());
+
+app.use(resourceRoutes);
 
 // connecting to Redis server 
 const startServer = async()=>{
@@ -23,14 +27,7 @@ const startServer = async()=>{
 }
 
 
-app.get('/test-redis', async (req, res) => {
-    try {
-        await redisClient.set('test', 'Hello Redis');
-        const value = await redisClient.get('test');
-        res.json({ message: 'Redis is working!', value });
-    } catch (error) {
-        res.status(500).json({ error: 'Redis connection failed' });
-    }
-});
+
+
 
 startServer();
