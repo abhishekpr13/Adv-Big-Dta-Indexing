@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Get Token for API Demo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        
+        .token-box {
+            background: #f5f5f5;
+            border: 2px solid #667eea;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 20px;
+            word-break: break-all;
+        }
+        
+        .token-box textarea {
+            width: 100%;
+            min-height: 200px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 12px;
+            resize: vertical;
+        }
+        
+        .instructions {
+            background: #e8f4fd;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        
+        .status {
+            text-align: center;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+    </style>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Google OAuth Token Generator</h1>
+        <p style="text-align: center;">Sign in with Google to get a token for testing the Healthcare Plan API</p>
+        
+        <div style="text-align: center; margin: 20px;">
+            <div id="g_id_onload"
+                 data-client_id="328696784737-q9vg36g0surecteaa81gu301u40dh3jp.apps.googleusercontent.com"
+                 data-callback="handleCredentialResponse">
+            </div>
+            <div class="g_id_signin" data-type="standard" data-size="large"></div>
+        </div>
+        
+        <div id="authStatus"></div>
+        
+        <div id="tokenDisplay" style="display: none;">
+            <div class="instructions">
+                <strong>📋 How to use this token:</strong>
+                <ol>
+                    <li>Copy the entire token from the box below</li>
+                    <li>Open Postman</li>
+                    <li>In the Authorization tab, select "Bearer Token"</li>
+                    <li>Paste the token in the Token field</li>
+                    <li>Or add header: <code>Authorization: Bearer [token]</code></li>
+                </ol>
+            </div>
+            
+            <div class="token-box">
+                <h3>Your Bearer Token:</h3>
+                <textarea id="tokenText" readonly onclick="this.select()"></textarea>
+                <button onclick="copyToken()" style="margin-top: 10px; padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                    📋 Copy Token
+                </button>
+                <span id="copyStatus" style="margin-left: 10px; color: green; display: none;">✓ Copied!</span>
+            </div>
+            
+            <div style="margin-top: 20px; padding: 15px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 5px;">
+                <strong>⏰ Note:</strong> This token expires in 1 hour. After that, you'll need to sign in again to get a new token.
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function handleCredentialResponse(response) {
+            const token = response.credential;
+            
+            // Show success status
+            document.getElementById('authStatus').innerHTML = 
+                '<div class="status status-success">✅ Successfully authenticated!</div>';
+            
+            // Display the token section
+            document.getElementById('tokenDisplay').style.display = 'block';
+            
+            // Put the full token in the textarea
+            document.getElementById('tokenText').value = token;
+            
+            // Log to console as well
+            console.log('Token:', token);
+        }
+        
+        function copyToken() {
+            const tokenText = document.getElementById('tokenText');
+            tokenText.select();
+            document.execCommand('copy');
+            
+            // Show copy confirmation
+            document.getElementById('copyStatus').style.display = 'inline';
+            setTimeout(() => {
+                document.getElementById('copyStatus').style.display = 'none';
+            }, 2000);
+        }
+    </script>
+</body>
+</html>
