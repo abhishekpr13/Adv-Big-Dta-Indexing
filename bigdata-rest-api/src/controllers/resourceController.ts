@@ -3,6 +3,8 @@ import { validatePlan } from "../models/schema";
 import {plan} from "../types/resource";
 import redisClient from "../config/redis";
 import crypto from 'crypto';
+import { error } from "console";
+import { json } from "stream/consumers";
 
 
 const generateETag = (data: any): string => {
@@ -34,7 +36,7 @@ export const createPlan = async(req: Request, res: Response) => {
         const etag = generateETag(planData);
         const now = new Date().toISOString();
 
-        const planToStore = {
+        const planToStore= {
             ...planData,
             etag: etag,
             lastModified: now
@@ -153,5 +155,73 @@ export const getAllPlan = async(req:Request, res: Response)=>{
         res.status(500).json({
             error: "Internal server Error"
         });
+    }
+}
+export const updatePlan = async(req: Request, res: Response) =>{
+    try{
+        const getId = req.params.id;
+        const patchData = req.body;
+        const ifMatch = req.headers['if-match'] as string;
+        const key = `plan:${getId}`;
+        const planData = await redisClient.get(key);
+        if(!planData){
+            return res.status(404).json({
+                error: " User not available"
+            })
+        }
+       const plan = JSON.parse(planData);
+       const cleanIfMatch = ifMatch ? ifMatch.replace(/"/g, ''):'';
+       if (!cleanIfMatch){
+            return res.status(412).json({
+                error: "No if-match header"
+            })
+       }
+       if (cleanIfMatch !==plan.etag){
+        return res.status(412).json({
+            error: "Please get the latest version of E-tag"
+        })
+       }
+
+       const mergedPlan = {
+            ...plan,
+            ...patchData,
+            planCostShares: patchData.planCostShares
+            ?{
+                ...plan.planCostShares,
+                ...patchData.planCostShares
+            }
+            : plan.planCostShares,
+            linkedPlanServices : patchData.linkedPlanServices || plan.linkedPlanServices
+       };
+       const { etag: oldEtag, lastModified: oldModified, ...planToValidate } = mergedPlan;
+       const isValid = validatePlan(planToValidate);
+       if (!isValid){
+            return res.status(400).json({
+                error: "Merge plan failed to validate",
+                details: validatePlan.errors
+            })
+        }
+
+        const newEtag = generateETag(planToValidate);
+        const updatePlan = {
+            ...planToValidate,
+            etag: newEtag, 
+            lastModified: new Date().toISOString()
+        }
+        await redisClient.set(key, JSON.stringify(updatePlan));
+        res.setHeader('ETag', `"${newEtag}"`);
+        res.setHeader('Last-Modified', updatePlan.lastModified);
+        
+        return res.status(200).json({
+            message: "Plan updated successfully",
+            data: planToValidate
+            
+        });
+
+
+    } catch(error){
+        return res.status(500).json({
+            error: "Internal server error"
+        })
     }
 }
