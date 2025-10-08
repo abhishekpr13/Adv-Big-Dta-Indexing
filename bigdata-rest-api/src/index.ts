@@ -3,6 +3,7 @@ import  express  from "express";
 import redisClient from "./config/redis";
 import resourceRoutes from "../src/routes/resourceRoutes"
 
+import path from 'path';
 
 
 const app = express();
@@ -25,6 +26,11 @@ const startServer = async()=>{
         process.exit(1);
     }
 }
+
+app.get('/demo', (req, res) => {
+    res.sendFile(path.join(__dirname, '../demo.html'));
+});
+
 
 
 

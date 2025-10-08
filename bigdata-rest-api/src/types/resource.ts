@@ -30,3 +30,15 @@ export interface plan {
     planType: string;
     creationDate: string;
 }
+
+declare global {
+    namespace Express {
+        interface Request {
+            user?: {
+                email?: string;
+                name?: string;
+                googleId?: string;
+            }
+        }
+    }
+}
